@@ -1,0 +1,1803 @@
+package sbook.com;
+
+import com.toedter.calendar.JDateChooser;
+import org.apache.commons.lang3.RandomStringUtils;
+import javax.mail.*;
+import javax.mail.internet.InternetAddress;
+import javax.mail.internet.MimeMessage;
+import javax.swing.*;
+import javax.swing.filechooser.FileNameExtensionFilter;
+import javax.swing.plaf.basic.BasicScrollBarUI;
+import java.awt.*;
+import java.awt.event.MouseAdapter;
+import java.awt.event.MouseEvent;
+import java.awt.event.MouseListener;
+import java.awt.geom.Area;
+import java.awt.geom.Ellipse2D;
+import java.awt.geom.Rectangle2D;
+import java.io.*;
+import java.net.Socket;
+import java.sql.*;
+import java.text.DateFormat;
+import java.text.SimpleDateFormat;
+import java.util.Date;
+import java.util.Properties;
+
+public class User extends Component implements Runnable{
+    private static BufferedReader reader;
+    private static BufferedWriter writer;
+    private static JFrame jFrame, messageFrame,user_code_frame,my_accountFrame;
+    private static JPanel my_account_panel, messageBox;
+    Box verticalPanel = Box.createVerticalBox();
+    private static String user_code,usernameId,EmailId;
+    private static int username_password;
+
+    public User() {
+        Image logo = new ImageIcon(ClassLoader.getSystemResource("sbook/com/images/icon.png")).getImage().getScaledInstance(40,40, Image.SCALE_SMOOTH);
+        JPanel jPanel = new JPanel();
+        jFrame = new JFrame("Secretbook");
+        jFrame.setDefaultCloseOperation(WindowConstants.EXIT_ON_CLOSE);
+        jFrame.setSize(1450,900);
+        jFrame.setIconImage(logo);
+        jFrame.setResizable(false);
+        jFrame.setLocationRelativeTo(null);
+        jFrame.setVisible(true);
+
+        jPanel.setLayout(null);
+        jFrame.getContentPane().add(jPanel);
+
+        Color color = new Color(19,56,190);
+        JTextArea header = new JTextArea();
+        header.setBounds(0,0,1920,80);
+        header.setEditable(false);
+        header.setBackground(color);
+        jPanel.add(header);
+
+        JMenuBar jMenuBar = new JMenuBar();
+        JMenu login_page = new JMenu("Home");
+        JMenu about_us = new JMenu("About us");
+        jMenuBar.add(login_page);
+        jMenuBar.add(about_us);
+        jFrame.setJMenuBar(jMenuBar);
+
+        about_us.addMouseListener(new MouseListener() {
+            @Override
+            public void mouseClicked(MouseEvent e) {
+                About(true,logo);
+                jFrame.setVisible(false);
+            }
+
+            @Override
+            public void mousePressed(MouseEvent e) {
+
+            }
+
+            @Override
+            public void mouseReleased(MouseEvent e) {
+
+            }
+
+            @Override
+            public void mouseEntered(MouseEvent e) {
+
+            }
+
+            @Override
+            public void mouseExited(MouseEvent e) {
+
+            }
+        });
+
+        JLabel welcomeSlide = new JLabel("Welcome to sbook");
+        welcomeSlide.setFont(new Font("Tahoma", Font.BOLD | Font.ITALIC, 26));
+        welcomeSlide.setForeground(Color.white);
+        welcomeSlide.setBounds(620, 0, 370, 83);
+        header.add(welcomeSlide);
+
+        Date date = new Date();
+        String[] year = date.toString().split(" ");
+        String copyright = "Secretbook© "+year[year.length-1];
+
+        JTextArea footer = new JTextArea();
+        footer.setBounds(0,600,1920,180);
+        footer.setFont(new Font("Tahoma",Font.PLAIN,18));
+        footer.setForeground(Color.gray);
+        footer.setEditable(false);
+        footer.setText("\n\n\n\n\n   Secretbook\n   The S.S Productions\n   sbook Team mail: sbook@mail.com");
+        jPanel.add(footer);
+
+        JLabel copyright_footer = new JLabel(copyright);
+        copyright_footer.setBounds(10,785,200,15);
+        copyright_footer.setFont(new Font("Segoe Ui",Font.BOLD,10));
+        jPanel.add(copyright_footer);
+
+        JLabel already_message1 = new JLabel("Already an account holder!");
+        already_message1.setFont(new Font("Arial", Font.BOLD, 48));
+        already_message1.setBounds(62, 110, 650, 50);
+        jPanel.add(already_message1);
+
+        JLabel already_message2 = new JLabel("Sign In");
+        already_message2.setFont(new Font("Arial", Font.BOLD, 48));
+        already_message2.setBounds(62, 170, 350, 55);
+        jPanel.add(already_message2);
+
+        JLabel userIdLabel = new JLabel("User I.D");
+        userIdLabel.setFont(new Font("Tahoma", Font.PLAIN, 19));
+        userIdLabel.setBounds(62, 250, 143, 30);
+        jPanel.add(userIdLabel);
+
+        JTextField userIdTextField = new JTextField();
+        userIdTextField.setFont(new Font("Tahoma", Font.PLAIN, 16));
+        userIdTextField.setBounds(196, 256, 203, 22);
+        jPanel.add(userIdTextField);
+
+        JLabel passwordLabel = new JLabel("Password");
+        passwordLabel.setFont(new Font("Tahoma", Font.PLAIN, 19));
+        passwordLabel.setBounds(62, 298, 101, 22);
+        jPanel.add(passwordLabel);
+
+        JPasswordField passwordField = new JPasswordField();
+        passwordField.setBounds(196, 299, 203, 22);
+        jPanel.add(passwordField);
+
+        JButton signInButton = new JButton("Sign In");
+        signInButton.setBackground(color);
+        signInButton.setForeground(Color.WHITE);
+        signInButton.setFont(new Font("Tahoma", Font.PLAIN, 19));
+        signInButton.setSize( 111, 35);
+        signInButton.setLocation(217,339);
+        jPanel.add(signInButton);
+
+        signInButton.addActionListener(e -> {
+            usernameId = "";
+            username_password=0;
+            String userid = userIdTextField.getText().trim();
+            String passcode = passwordField.getText().trim();
+            connection connection = new connection();
+            try {
+                String query1 = "SELECT * FROM user_info WHERE username='" + userid + "';";
+                ResultSet resultSet1 = connection.statement.executeQuery(query1);
+                while (resultSet1.next()) {
+                    usernameId = resultSet1.getString("username");
+                }
+                String query2 = "SELECT * FROM user_info WHERE username='"+userid+"';";
+                ResultSet resultSet2 = connection.statement.executeQuery(query2);
+                while (resultSet2.next()){
+                    username_password = resultSet2.getInt("password");
+                }
+                String query3 = "SELECT * FROM user_info WHERE username='"+usernameId+"';";
+                ResultSet resultSet3 = connection.statement.executeQuery(query3);
+                while (resultSet3.next()){
+                    EmailId = resultSet3.getString("email_address");
+                }
+            }catch (SQLException exception){
+                exception.getErrorCode();
+            }
+            if (usernameId.equals(userid) && username_password==secure_password(passcode)){
+                jFrame.setVisible(false);
+                String query4 = "UPDATE user_info SET activity='active' WHERE username='"+usernameId+"';";
+                try {
+                    connection.statement.executeUpdate(query4);
+                }catch (Exception exception){
+                    JOptionPane.showMessageDialog(null,"Error! No connection found");
+                }
+                Home(true,logo);
+            }
+            else
+                JOptionPane.showMessageDialog(null,"Error! wrong credentials or you don't have an existing sbook account");
+
+            userIdTextField.setText("");
+            passwordField.setText("");
+        });
+
+        JLabel register_message1 = new JLabel("New to sbook!");
+        register_message1.setFont(new Font("Arial", Font.BOLD, 48));
+        register_message1.setBounds(842, 110, 400, 50);
+        jPanel.add(register_message1);
+
+        JLabel register_message2 = new JLabel("Create a New Account");
+        register_message2.setFont(new Font("Arial", Font.BOLD, 48));
+        register_message2.setBounds(842, 170, 600, 50);
+        jPanel.add(register_message2);
+
+        JLabel f_name = new JLabel("First name");
+        f_name.setFont(new Font("Tahoma", Font.PLAIN, 19));
+        f_name.setBounds(842, 250, 90, 30);
+        jPanel.add(f_name);
+
+        JTextField f_nameTextField = new JTextField();
+        f_nameTextField.setFont(new Font("Tahoma",Font.PLAIN,16));
+        f_nameTextField.setBounds(950,255,143,22);
+        jPanel.add(f_nameTextField);
+
+        JLabel L_name = new JLabel("Last name");
+        L_name.setFont(new Font("Tahoma", Font.PLAIN, 19));
+        L_name.setBounds(1130, 250, 90, 30);
+        jPanel.add(L_name);
+
+        JTextField L_nameTextField = new JTextField();
+        L_nameTextField.setFont(new Font("Tahoma",Font.PLAIN,16));
+        L_nameTextField.setBounds(1238,255,143,22);
+        jPanel.add(L_nameTextField);
+
+        JLabel age = new JLabel("Age");
+        age.setFont(new Font("Tahoma", Font.PLAIN, 19));
+        age.setBounds(842, 300, 40, 30);
+        jPanel.add(age);
+
+        JTextField ageTextField = new JTextField();
+        ageTextField.setFont(new Font("Tahoma",Font.PLAIN,16));
+        ageTextField.setBounds(900,305,143,22);
+        jPanel.add(ageTextField);
+
+        JLabel birthdate = new JLabel("Birthdate");
+        birthdate.setFont(new Font("Tahoma", Font.PLAIN, 19));
+        birthdate.setBounds(1110, 300, 80, 30);
+        jPanel.add(birthdate);
+
+        JDateChooser dateChooser = new JDateChooser();
+        dateChooser.setDateFormatString("dd MMMM yyyy");
+        dateChooser.setBounds(1210,305,150,22);
+        jPanel.add(dateChooser);
+
+        JLabel gender = new JLabel("Gender");
+        gender.setFont(new Font("Tahoma", Font.PLAIN, 19));
+        gender.setBounds(842, 350, 70, 30);
+        jPanel.add(gender);
+
+        JRadioButton male = new JRadioButton("Male");
+        male.setBounds(920,350,60,35);
+        jPanel.add(male);
+
+        JRadioButton female = new JRadioButton("Female");
+        female.setBounds(1000,350,70,35);
+        jPanel.add(female);
+
+        JRadioButton others = new JRadioButton("Others");
+        others.setBounds(1090,350,70,35);
+        jPanel.add(others);
+
+        ButtonGroup genderGroup = new ButtonGroup();
+        genderGroup.add(male);
+        genderGroup.add(female);
+        genderGroup.add(others);
+
+        JLabel email_address = new JLabel("UNBC/CNC Email Address");
+        email_address.setFont(new Font("Tahoma", Font.PLAIN, 19));
+        email_address.setBounds(842, 400, 230, 30);
+        jPanel.add(email_address);
+
+        JTextField email_addressTextField = new JTextField();
+        email_addressTextField.setFont(new Font("Tahoma",Font.PLAIN,16));
+        email_addressTextField.setBounds(1090,405,180,22);
+        jPanel.add(email_addressTextField);
+
+        JButton register_button = new JButton("Register");
+        register_button.setForeground(Color.white);
+        register_button.setBackground(Color.RED);
+        register_button.setBounds(1010,445,111,35);
+        jPanel.add(register_button);
+
+        user_code = RandomStringUtils.randomNumeric(6);
+
+        //----User-code-Frame-starts-here------------------------------------------------------------------------------------------------//
+        //=======================================================================================================================================//
+        user_code_frame = new JFrame();
+        user_code_frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+        user_code_frame.setIconImage(logo);
+        user_code_frame.setResizable(false);
+        user_code_frame.setLocation(550,300);
+        user_code_frame.setSize(400,200);
+
+        register_button.addActionListener(e ->{
+            String user_email = email_addressTextField.getText().trim();
+            String[] email = user_email.split("@");
+            int user_age = Integer.parseInt(ageTextField.getText().trim());
+            DateFormat yearFormat = new SimpleDateFormat("yyyy");
+            int birthDate_year = Integer.parseInt(yearFormat.format(dateChooser.getDate()).trim());
+            int age_gap = Integer.parseInt(year[year.length-1])-birthDate_year;
+            if (!f_nameTextField.getText().trim().equals("") && !L_nameTextField.getText().trim().equals("") && !ageTextField.getText().trim().equals("") && user_age>=12 && !email_addressTextField.getText().trim().equals("")){
+                if (genderGroup.isSelected(male.getModel()) ||  genderGroup.isSelected(female.getModel()) || genderGroup.isSelected(others.getModel())){
+                    if (age_gap==user_age){
+                        if (email[1].trim().equals("unbc.ca") || email[1].trim().equals("cnc.bc.ca")) {
+                            if (!email_checker(email_addressTextField.getText().trim())) {
+                                jFrame.setVisible(false);
+                                user_code_frame.setVisible(true);
+                                sending_code(user_email,user_code);
+                            }
+                            else
+                                JOptionPane.showMessageDialog(null,"Error! email address already exists");
+                        }
+                        else
+                            JOptionPane.showMessageDialog(null,"Error! your email address doesn't match the criteria");
+                    }
+                    else
+                        JOptionPane.showMessageDialog(null,"Your Age and BirthDate doesn't match! check it.");
+                }
+                else
+                    JOptionPane.showMessageDialog(null,"Error! no selected gender");
+            }
+            else
+                JOptionPane.showMessageDialog(null,"Error! You are missing something");
+        });
+
+        JPanel user_code_panel = new JPanel();
+        user_code_frame.getContentPane().add(user_code_panel);
+        user_code_panel.setLayout(null);
+
+        JLabel confirm_code = new JLabel("Confirmation code");
+        confirm_code.setBounds(30,50,160,30);
+        confirm_code.setFont(new Font("Tahoma", Font.PLAIN, 19));
+        user_code_panel.add(confirm_code);
+
+        JTextField code = new JTextField();
+        code.setBounds(200,55,150,22);
+        code.setFont(new Font("Tahoma",Font.PLAIN,16));
+        user_code_panel.add(code);
+
+        JButton match = new JButton("confirm");
+        match.setBounds(150,100,80,20);
+        user_code_panel.add(match);
+
+        match.addActionListener(e2->{
+            String user_email = email_addressTextField.getText().trim();
+            String[] email = user_email.split("@");
+            File file = new File(String.valueOf(ClassLoader.getSystemResource("sbook/com/images/account_holder.jpg")));
+            DateFormat dateFormat = new SimpleDateFormat("dd MMMM yyyy");
+            int user_age = Integer.parseInt(ageTextField.getText().trim());
+            if (code.getText().trim().equals(user_code)) {
+                String First_name = f_nameTextField.getText().trim();
+                String Last_name = L_nameTextField.getText().trim();
+                String user_email_name = email[0];
+                String user_password = password_Generator();
+                String user_birthDate = dateFormat.format(dateChooser.getDate());
+                String user_gender;
+                if (genderGroup.isSelected(male.getModel()))
+                    user_gender = "Male";
+                else if (genderGroup.isSelected(female.getModel()))
+                    user_gender = "Female";
+                else
+                    user_gender = "Others";
+                String status = "";
+                if (email[1].equals("unbc.ca"))
+                    status = "I am a student of UNBC!";
+                else if (email[1].equals("cnc.bc.ca"))
+                    status = "I am a student of CNC!";
+                try {
+                    FileInputStream fin = new FileInputStream(file);
+                    connection connection = new connection();
+                    String query = "INSERT INTO user_info (f_name,L_name,email_address,username,password,age,birthdate,gender,status,image_path) VALUES(?,?,?,?,?,?,?,?,?,?)";
+                    PreparedStatement pStatement = connection.connection.prepareStatement(query);
+                    pStatement.setString(1,First_name);
+                    pStatement.setString(2,Last_name);
+                    pStatement.setString(3,user_email);
+                    pStatement.setString(4,user_email_name);
+                    pStatement.setInt(5,secure_password(user_password));
+                    pStatement.setInt(6,user_age);
+                    pStatement.setString(7,user_birthDate);
+                    pStatement.setString(8,user_gender);
+                    pStatement.setString(9,status);
+                    pStatement.setBinaryStream(10,fin,(int)file.length());
+                    pStatement.executeUpdate();
+                    pStatement.close();
+                    fin.close();
+                    JOptionPane.showMessageDialog(null,"Welcome to sbook! "+First_name+" .Your password's been sent to your email.");
+                    sending_msg(user_email, user_password, "sbook Account Password");
+                } catch (Exception exception) {
+                    JOptionPane.showMessageDialog(null,exception.getMessage());
+                    System.exit(0);
+                }
+                f_nameTextField.setText("");
+                L_nameTextField.setText("");
+                ageTextField.setText("");
+                genderGroup.clearSelection();
+                email_addressTextField.setText("");
+                dateChooser.setDate(date);
+                jFrame.setVisible(true);
+                user_code_frame.setVisible(false);
+            }
+            else
+                JOptionPane.showMessageDialog(null,"Error! confirmation code doesn't match");
+        });
+
+        try{
+            Socket socketClient = new Socket("localhost", 6061);
+            writer = new BufferedWriter(new OutputStreamWriter(socketClient.getOutputStream()));
+            reader = new BufferedReader(new InputStreamReader(socketClient.getInputStream()));
+        }catch(Exception exception){
+            JOptionPane.showMessageDialog(null,"Connection Error! cannot connect to the Server.");
+        }
+    }
+
+    @Override
+    public void run() {
+        try{
+            connection connection = new connection();
+            String msg_input;
+            do {
+                msg_input = reader.readLine();
+                String image_query = "SELECT image_path FROM user_info WHERE username='" + usernameId + "';";
+                ResultSet image_set = connection.statement.executeQuery(image_query);
+                File imageFile = new File("profile_photo.jpg");
+                FileOutputStream fos = new FileOutputStream(imageFile);
+                byte[] bytes;
+                Blob blob;
+                while (image_set.next()) {
+                    blob = image_set.getBlob("image_path");
+                    bytes = blob.getBytes(1, (int) blob.length());
+                    fos.write(bytes);
+                }
+                FileInputStream fin = new FileInputStream(imageFile.getAbsolutePath());
+                Image sent_image = new ImageIcon(fin.readAllBytes()).getImage().getScaledInstance(34, 34, Image.SCALE_FAST);
+
+                JPanel msgPanel = new panel(sent_image,senderId(msg_input),decoder(senderMSG(msg_input)),senderTime(msg_input));
+                verticalPanel.add(msgPanel);
+                verticalPanel.add(Box.createVerticalStrut(10));
+                messageBox.add(verticalPanel,BorderLayout.NORTH);
+                messageBox.validate();
+            }while(!msg_input.equals("exit"));
+        }catch(Exception exception){
+            exception.printStackTrace();
+        }
+    }
+    private static class circleFrame extends JComponent{
+        Color color;
+        public void display(){ repaint();}
+        @Override
+        protected void paintComponent(Graphics g){
+            super.paintComponent(g);
+            Graphics2D g2d = (Graphics2D) g;
+            g2d.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
+            g2d.setColor(color);
+            Area rectangle = new Area(new Rectangle2D.Float(0,0,46,46));
+            Area circle = new Area(new Ellipse2D.Float(3,3,40,40));
+            rectangle.subtract(circle);
+            g2d.fill(rectangle);
+        }
+    }
+    private static class backgroundFrame extends JComponent {
+        public void display(){ repaint();}
+        @Override
+        protected void paintComponent(Graphics g) {
+            super.paintComponent(g);
+            Graphics2D g2D = (Graphics2D) g;
+            g2D.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
+            g2D.setColor(new Color(50,50,50));
+            g2D.fillRoundRect(0, 0, 600, 80, 20, 20);
+        }
+    }
+    private static class roundRectangle extends JComponent{
+        Color color;
+        int Width;
+        int Height;
+        int arcWidth;
+        int arcHeight;
+        public void display(){repaint();}
+        @Override
+        protected void paintComponent(Graphics g){
+            super.paintComponent(g);
+            Graphics2D g2D = (Graphics2D) g;
+            g2D.setRenderingHint(RenderingHints.KEY_ANTIALIASING,RenderingHints.VALUE_ANTIALIAS_ON);
+            g2D.setColor(color);
+            g2D.fillRoundRect(0,0,Width,Height,arcWidth,arcHeight);
+        }
+    }
+    public static class panel extends JPanel{
+        public panel(Image sender_photo,String userid_of_sender,String text,String time) {
+            this.setLayout(null);
+            this.setPreferredSize(new Dimension(450, 120));
+            this.setBackground(Color.white);
+
+            Date date = new Date();
+            String[] today_array = date.toString().split(" ");
+            String todayTime = today_array[0]+today_array[1]+today_array[2];
+            String[] sent_array = time.split(" ");
+            String sentTime = sent_array[0]+sent_array[1]+sent_array[2];
+            String showedTime;
+            if (todayTime.equals(sentTime)){
+                showedTime = "Today "+ sent_array[3];
+            }
+            else
+                showedTime = sentTime+" "+sent_array[3];
+
+            JLabel personName = new JLabel(userid_of_sender);
+            personName.setForeground(Color.white);
+            personName.setFont(new Font("Arial",Font.PLAIN|Font.BOLD,18));
+            personName.setBounds(65,15,userid_of_sender.length()*12,20);
+            personName.setBorder(null);
+            personName.setBackground(null);
+            this.add(personName);
+
+            triangle triangle = new triangle();
+            triangle.setBounds(65+userid_of_sender.length()*12,22,8,8);
+            this.add(triangle);
+            triangle.display();
+
+            JLabel personTime = new JLabel(showedTime);
+            personTime.setBorder(null);
+            personTime.setForeground(Color.white);
+            personTime.setBackground(null);
+            personTime.setFont(new Font("Arial",Font.PLAIN,10));
+            personTime.setBounds(80+userid_of_sender.length()*12,20,150,12);
+            this.add(personTime);
+
+            JTextArea msg_textArea = new JTextArea();
+            msg_textArea.setEditable(false);
+            msg_textArea.setBorder(null);
+            msg_textArea.setLineWrap(true);
+            msg_textArea.setFont(new Font("Arial", Font.BOLD, 20));
+            msg_textArea.setForeground(Color.white);
+            msg_textArea.setBackground(new Color(19,56,190));
+            msg_textArea.setBounds(20, 55, 550, 50);
+            msg_textArea.setText(text);
+            this.add(msg_textArea);
+
+            innerCircleFrame circleFrame = new innerCircleFrame();
+            circleFrame.color = new Color(19,56,190);
+            circleFrame.setBounds(20,10,34,34);
+            this.add(circleFrame);
+            circleFrame.display();
+
+            JLabel sender_pic = new JLabel(new ImageIcon(sender_photo));
+            sender_pic.setBounds(21,11,32,32);
+            this.add(sender_pic);
+
+            innerTextFrame bg_image = new innerTextFrame();
+            bg_image.setBounds(0, 0, 640, 120);
+            this.add(bg_image);
+            bg_image.display();
+        }
+        private static class innerCircleFrame extends JComponent{
+            Color color;
+            public void display(){ repaint();}
+            @Override
+            protected void paintComponent(Graphics g){
+                super.paintComponent(g);
+                Graphics2D g2d = (Graphics2D) g;
+                g2d.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
+                g2d.setColor(color);
+                Area rectangle = new Area(new Rectangle2D.Float(0,0,34,34));
+                Area circle = new Area(new Ellipse2D.Float(2,2,30,30));
+                rectangle.subtract(circle);
+                g2d.fill(rectangle);
+            }
+        }
+        private static class triangle extends JComponent{
+            public void display(){ repaint(); }
+            @Override
+            protected void paintComponent(Graphics g){
+                super.paintComponent(g);
+                Graphics2D graphics2D = (Graphics2D) g;
+                graphics2D.setRenderingHint(RenderingHints.KEY_ANTIALIASING,RenderingHints.VALUE_ANTIALIAS_ON);
+                graphics2D.setColor(Color.white);
+                graphics2D.fillPolygon(new int[]{0,0,8},new int[] {8,0,4},3);
+            }
+        }
+        private static class innerTextFrame extends JComponent {
+            public void display(){ repaint();}
+            @Override
+            protected void paintComponent(Graphics g) {
+                super.paintComponent(g);
+                Color color = new Color(19, 56, 190);
+                Graphics2D g2D = (Graphics2D) g;
+                g2D.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
+                g2D.setColor(color);
+                g2D.fillRoundRect(0, 0, 640, 120, 40, 40);
+            }
+        }
+    }
+    public static class online_users extends JPanel{
+        public online_users(){
+            this.setLayout(null);
+            this.setBackground(Color.white);
+
+            DefaultListModel<String> model = new DefaultListModel<>();
+            JList<String> list = new JList<>();
+            connection connection = new connection();
+
+            String query = "SELECT username FROM user_info WHERE activity='active';";
+            try {
+                ResultSet resultSet = connection.statement.executeQuery(query);
+                while (resultSet.next()) {
+                    String name = resultSet.getString("username");
+                    if (name.equals(usernameId)){
+                      model.addElement(null);
+                    }
+                    else
+                        model.addElement(name);
+                }
+                list.setModel(model);
+            }catch (Exception exception){
+                JOptionPane.showMessageDialog(null,"Internet Error! cannot connect to the Server");
+            }
+            list.setForeground(Color.white);
+            list.setBackground(new Color(56,56,56));
+            list.setSelectionForeground(new Color(19,56,190));
+            list.setSelectionBackground(new Color(56,56,56));
+            this.add(list);
+
+
+            list.addMouseListener(new MouseAdapter() {
+                @Override
+                public void mouseClicked(MouseEvent e) {
+                    super.mouseClicked(e);
+                    if (e.getClickCount()==1){
+                        System.out.println(list.getName());
+                    }
+                }
+            });
+
+            JScrollPane scrollPane = new JScrollPane(list,JScrollPane.VERTICAL_SCROLLBAR_ALWAYS,JScrollPane.HORIZONTAL_SCROLLBAR_NEVER);
+            scrollPane.setBounds(15,20,280,500);
+            scrollPane.setBorder(null);
+            scrollPane.getVerticalScrollBar().setUI(new BasicScrollBarUI(){
+                @Override
+                protected JButton createDecreaseButton(int orientation){
+                    return zeroButton();
+                }
+                @Override
+                protected JButton createIncreaseButton(int orientation){
+                    return zeroButton();
+                }
+                private JButton zeroButton(){
+                    JButton jbutton = new JButton();
+                    jbutton.setPreferredSize(new Dimension(0, 0));
+                    jbutton.setMinimumSize(new Dimension(0, 0));
+                    jbutton.setMaximumSize(new Dimension(0, 0));
+                    return jbutton;
+                }
+                @Override
+                protected void configureScrollBarColors(){
+                    this.thumbColor = Color.WHITE;
+                }
+            });
+            scrollPane.getVerticalScrollBar().setBackground(new Color(56,56,56));
+            this.add(scrollPane);
+
+            JLabel copyrightSign = new JLabel("Secretbook© 2020");
+            copyrightSign.setFont(new Font("Tahoma",Font.BOLD,10));
+            copyrightSign.setForeground(Color.white);
+            copyrightSign.setBounds(15,530,90,12);
+            this.add(copyrightSign);
+
+            online_users_bg bg = new online_users_bg();
+            bg.setBounds(0,0,300,550);
+            this.add(bg);
+            bg.display();
+
+            this.validate();
+        }
+        private static class online_users_bg extends JComponent{
+            public void display(){repaint();}
+            @Override
+            protected void paintComponent(Graphics g){
+                super.paintComponent(g);
+                Graphics2D g2d = (Graphics2D) g;
+                g2d.setRenderingHint(RenderingHints.KEY_ANTIALIASING,RenderingHints.VALUE_ANTIALIAS_ON);
+                g2d.setColor(new Color(56,56,56));
+                g2d.fillRoundRect(0,0,300,550,30,30);
+            }
+        }
+    }
+    /*
+    public static class optionMenu extends JComponent{
+        public optionMenu(){
+            JButton option1 = new JButton("View Profile");
+            option1.setFont(new Font("Times New Roman",Font.PLAIN,18));
+            option1.setBackground(Color.white);
+            option1.setBorder(null);
+            option1.setBounds(0,10,80,20);
+            this.add(option1);
+
+            JButton option2 = new JButton("Add to your book");
+            option2.setFont(new Font("Times New Roman",Font.PLAIN,18));
+            option2.setBackground(Color.white);
+            option2.setBorder(null);
+            option2.setBounds(0,35,80,20);
+            this.add(option2);
+        }
+        @Override
+        protected void paintComponent(Graphics g){
+            super.paintComponent(g);
+            Graphics2D g2d = (Graphics2D) g;
+            g2d.setRenderingHint(RenderingHints.KEY_ANTIALIASING,RenderingHints.VALUE_ANTIALIAS_ON);
+            g2d.setColor(Color.white);
+            g2d.fillRoundRect(0,0,100,100,20,20);
+        }
+    }
+
+     */
+    public static String senderId(String message){
+        String[] array = message.split("->");
+        StringBuilder userID = new StringBuilder();
+        if (array[3].equals("public")){
+            userID.append(array[0]);
+        }
+        return userID.toString();
+    }
+    public static String senderMSG(String message){
+        String[] array = message.split("->");
+        StringBuilder userMSG = new StringBuilder();
+        if (array[3].equals("public")){
+            userMSG.append(array[1]);
+        }
+        return userMSG.toString();
+    }
+    public static String senderTime(String message){
+        String[] array = message.split("->");
+        StringBuilder userTime = new StringBuilder();
+        if (array[3].equals("public")){
+            userTime.append(array[2]);
+        }
+        return userTime.toString();
+    }
+    public static String encoder(String msg){
+        String[] msg_array = msg.split("(?<=\\G..)");
+        StringBuilder encode = new StringBuilder();
+        for (String ch: msg_array){
+            for (int i=ch.length()-1;i>=0;i--){
+                encode.append(ch.charAt(i));
+            }
+        }
+        return encode.toString();
+    }
+    public static String decoder(String message){
+        String[] array_message = message.split("(?<=\\G..)");
+        StringBuilder decode = new StringBuilder();
+        for (String ch:array_message){
+            for (int i=ch.length()-1;i>=0;i--){
+                decode.append(ch.charAt(i));
+            }
+        }
+        return decode.toString();
+    }
+    public static boolean email_checker(String email_address) {
+        String[] separate_array = email_address.split("@");
+        String username = separate_array[0];
+        String username_holder = "";
+        boolean result = false;
+        try {
+            connection connection = new connection();
+            String query = "SELECT username from user_info WHERE username='" + username + "';";
+            ResultSet resultSet = connection.statement.executeQuery(query);
+            while (resultSet.next()) {
+                username_holder = resultSet.getString("username");
+            }
+            if (username_holder.equalsIgnoreCase(username))
+                result = true;
+        } catch (Exception exception){
+            exception.printStackTrace();
+        }
+        return result;
+    }
+    public static String password_Generator(){
+        String upperCaseLetters = RandomStringUtils.random(4,65,90,true,true);
+        String lowerCaseLetters = RandomStringUtils.random(1, 97, 122, true, true);
+        String numbers = RandomStringUtils.randomNumeric(2);
+        String alphaNumericChars = RandomStringUtils.randomAlphanumeric(2);
+        String specialChar = RandomStringUtils.random(3, 33, 47, false, false);
+        return upperCaseLetters.concat(lowerCaseLetters).concat(alphaNumericChars).concat(numbers).concat(specialChar);
+    }
+    public static int secure_password(String password){
+        String salt = "s&b";
+        StringBuilder mixer_container = new StringBuilder();
+        mixer_container.append(salt);
+        for (int i=0;i<password.length()/2;i++)
+            mixer_container.append(password.charAt(i));
+        mixer_container.append(salt);
+        for (int i=password.length()/2;i<password.length();i++)
+            mixer_container.append(password.charAt(i));
+        mixer_container.append(salt);
+        String product = mixer_container.toString();
+        return product.hashCode();
+    }
+    public static void sending_code(String email_address, String code){
+        String MAIL_SERVER = "smtp.gmail.com";
+        String USERNAME = "ssubhi@gmail.com";
+        String PASSWORD = "Golu&montisindhu";
+        String Subject = "sbook confirmation code";
+        try{
+            String Message = "Copy and paste the code given below."+"\nHere's your confirmation code: "+code;
+
+            Properties properties = System.getProperties();
+            properties.put("mail.smtp.host",MAIL_SERVER);
+            properties.put("mail.smtp.auth","true");
+
+            Session session = Session.getInstance(properties);
+            MimeMessage msg = new MimeMessage(session);
+
+            msg.setFrom(new InternetAddress(USERNAME));
+            msg.addRecipients(javax.mail.Message.RecipientType.TO, email_address);
+            msg.setSubject(Subject);
+            msg.setText(Message);
+
+            Transport transport = session.getTransport("smtps");
+            transport.connect(MAIL_SERVER,USERNAME,PASSWORD);
+            transport.sendMessage(msg,msg.getAllRecipients());
+            transport.close();
+        } catch (Exception exception){
+            JOptionPane.showMessageDialog(null,exception.getMessage());
+        }
+        System.out.print(code);
+    }
+    public static void sending_msg(String email_address,String user_password,String subject){
+        String MAIL_SERVER = "smtp.gmail.com";
+        String USERNAME = "ssubhi.24@gmail.com";
+        String PASSWORD = "Golu&montisindhu";
+        String message = "\t\t\t\t\t\tWelcome to sbook\n"+"Hi new user!\n"+"We've already set your password: "+user_password+"\nYou can change it by going to your profile";
+        try{
+            Properties properties = System.getProperties();
+            properties.put("mail.smtp.host",MAIL_SERVER);
+            properties.put("mail.smtp.auth","true");
+
+            Session session = Session.getInstance(properties);
+            MimeMessage msg = new MimeMessage(session);
+
+            msg.setFrom(new InternetAddress(USERNAME));
+            msg.addRecipients(javax.mail.Message.RecipientType.TO, email_address);
+            msg.setSubject(subject);
+            msg.setText(message);
+
+            Transport transport = session.getTransport("smtps");
+            transport.connect(MAIL_SERVER,USERNAME,PASSWORD);
+            transport.sendMessage(msg,msg.getAllRecipients());
+            transport.close();
+        } catch (Exception exception){
+            JOptionPane.showMessageDialog(null,exception.getMessage());
+        }
+    }
+    public static void sending_msg(String email_address,String new_password){
+        String MAIL_SERVER = "smtp.gmail.com";
+        String USERNAME = "ssubhi@gmail.com";
+        String PASSWORD = "Golu&montisindhu";
+        String subject = "sbook account password changed!";
+        String message = "Your password has been changed "+new_password.charAt(0)+new_password.charAt(1)+"*".repeat(new_password.length())+"\nIf not done by you. Email to sbook team we will be able to help as soon as we can";
+        try{
+            Properties properties = System.getProperties();
+            properties.put("mail.smtp.host",MAIL_SERVER);
+            properties.put("mail.smtp.auth","true");
+
+            Session session = Session.getInstance(properties);
+            MimeMessage msg = new MimeMessage(session);
+
+            msg.setFrom(new InternetAddress(USERNAME));
+            msg.addRecipients(javax.mail.Message.RecipientType.TO, email_address);
+            msg.setSubject(subject);
+            msg.setText(message);
+
+            Transport transport = session.getTransport("smtps");
+            transport.connect(MAIL_SERVER,USERNAME,PASSWORD);
+            transport.sendMessage(msg,msg.getAllRecipients());
+            transport.close();
+        } catch (Exception exception){
+            JOptionPane.showMessageDialog(null,exception.getMessage());
+        }
+    }
+    public static void sending_msg(String email_address){
+        String MAIL_SERVER = "smtp.gmail.com";
+        String USERNAME = "ssubhi@gmail.com";
+        String PASSWORD = "Golu&montisindhu";
+        String subject = "Secretbook Account Termination!";
+        String message = "Hi user!\n"+"Your sbook account with email address "+email_address+" has been terminated.\n"+"Was it you? If not, send an email to sbook team regarding your problem.";
+        try{
+            Properties properties = System.getProperties();
+            properties.put("mail.smtp.host",MAIL_SERVER);
+            properties.put("mail.smtp.auth","true");
+
+            Session session = Session.getInstance(properties);
+            MimeMessage msg = new MimeMessage(session);
+
+            msg.setFrom(new InternetAddress(USERNAME));
+            msg.addRecipients(javax.mail.Message.RecipientType.TO, email_address);
+            msg.setSubject(subject);
+            msg.setText(message);
+
+            Transport transport = session.getTransport("smtps");
+            transport.connect(MAIL_SERVER,USERNAME,PASSWORD);
+            transport.sendMessage(msg,msg.getAllRecipients());
+            transport.close();
+        } catch (Exception exception){
+            JOptionPane.showMessageDialog(null,exception.getMessage());
+        }
+    }
+    public static void Home(boolean is_visible,Image logo) {
+        connection connection = new connection();
+        messageFrame = new JFrame("Home");
+        messageFrame.setSize(1400, 820);
+        messageFrame.setIconImage(logo);
+        messageFrame.setResizable(false);
+        messageFrame.setDefaultCloseOperation(WindowConstants.EXIT_ON_CLOSE);
+        messageFrame.setLocationRelativeTo(null);
+        messageFrame.setVisible(is_visible);
+
+        JPanel messagePanel = new JPanel();
+        messageFrame.getContentPane().add(messagePanel);
+        messagePanel.setLayout(null);
+        messagePanel.setBackground(Color.WHITE);
+
+        JMenuBar menuBar = new JMenuBar();
+        JMenuItem change_password = new JMenuItem("Change Password");
+        JMenuItem delete_account = new JMenuItem("Delete Account");
+        JMenu log_out = new JMenu("Log out");
+        JMenu settings = new JMenu("Settings");
+        menuBar.add(settings);
+        settings.add(change_password);
+        settings.add(delete_account);
+        menuBar.add(log_out);
+        messageFrame.setJMenuBar(menuBar);
+
+        change_password.addActionListener(e->{
+            messageFrame.setVisible(false);
+            Change_password(true,logo);
+        });
+        delete_account.addActionListener(e->{
+            int delete = JOptionPane.showConfirmDialog(null,"Do you really want to terminate your sbook account");
+            if (delete==0){
+                messageFrame.setVisible(false);
+                Delete_account(usernameId);
+            }
+        });
+        log_out.addMouseListener(new MouseListener() {
+            @Override
+            public void mouseClicked(MouseEvent e) {
+                connection connection = new connection();
+                messageFrame.setVisible(false);
+                jFrame.setVisible(true);
+                String query = "UPDATE user_info SET activity='inactive' WHERE username='"+usernameId+"';";
+                try {
+                    connection.statement.executeUpdate(query);
+                } catch (SQLException exception) {
+                    JOptionPane.showMessageDialog(null,"Error! No connection found");
+                }
+                System.exit(0);
+            }
+
+            @Override
+            public void mousePressed(MouseEvent e) {
+
+            }
+
+            @Override
+            public void mouseReleased(MouseEvent e) {
+
+            }
+
+            @Override
+            public void mouseEntered(MouseEvent e) {
+
+            }
+
+            @Override
+            public void mouseExited(MouseEvent e) {
+
+            }
+        });
+
+        online_users usersPanel = new online_users();
+        usersPanel.setBounds(800,110,300,550);
+        messagePanel.add(usersPanel);
+
+        JTextField userName = new JTextField();
+        userName.setBorder(null);
+        userName.setEditable(false);
+        userName.setBackground(Color.white);
+        userName.setHorizontalAlignment(SwingConstants.RIGHT);
+        userName.setFont(new Font("Arial",Font.BOLD|Font.ITALIC,22));
+        userName.setBounds(1000,20,250,30);
+        messagePanel.add(userName);
+
+        String name_query = "SELECT f_name,L_name FROM user_info WHERE username='"+usernameId+"';";
+        try {
+            ResultSet resultSet = connection.statement.executeQuery(name_query);
+            while (resultSet.next()){
+                userName.setText(resultSet.getString("f_name")+" "+resultSet.getString("L_name"));
+            }
+        } catch (Exception exception) {
+            JOptionPane.showMessageDialog(null,"Error! network connection is not found");
+        }
+
+        circleFrame circleFrame = new circleFrame();
+        circleFrame.setBounds(40,35,46,46);
+        circleFrame.color = new Color(50,50,50);
+        messagePanel.add(circleFrame);
+        circleFrame.display();
+
+        String image_query = "SELECT image_path FROM user_info WHERE username='" + usernameId + "';";
+        try {
+            ResultSet image_set = connection.statement.executeQuery(image_query);
+            File new_file = new File("account_image1.jpg");
+            FileOutputStream fos = new FileOutputStream(new_file);
+            byte[] bytes;
+            Blob blob;
+            while (image_set.next()) {
+                blob = image_set.getBlob("image_path");
+                bytes = blob.getBytes(1, (int) blob.length());
+                fos.write(bytes);
+            }
+            FileInputStream fin = new FileInputStream(new_file.getAbsolutePath());
+            Image image1 = new ImageIcon(fin.readAllBytes()).getImage().getScaledInstance(40, 40, Image.SCALE_FAST);
+            ImageIcon imageIcon1 = new ImageIcon(image1);
+            JLabel user_image = new JLabel(imageIcon1);
+            user_image.setBackground(new Color(50, 50, 50));
+            user_image.setBounds(40, 35, 46, 46);
+            messagePanel.add(user_image);
+        }catch (Exception exception){
+            JOptionPane.showMessageDialog(null,"Connection Error! cannot connect to the Server.Try again later");
+        }
+
+        JTextArea messageTextArea = new JTextArea();
+        messageTextArea.setBorder(null);
+        messageTextArea.setLineWrap(true);
+        messageTextArea.setForeground(Color.lightGray);
+        messageTextArea.setFont(new Font("Arial",Font.PLAIN,18));
+        messageTextArea.setText("Type your P.P");
+        messageTextArea.setBounds(105,48,430,25);
+        messagePanel.add(messageTextArea);
+
+        messageTextArea.addMouseListener(new MouseListener() {
+            @Override
+            public void mouseClicked(MouseEvent e) {
+                messageTextArea.setText("");
+                messageTextArea.setForeground(Color.BLACK);
+                messageTextArea.setFont(new Font("Arial",Font.PLAIN,18));
+            }
+
+            @Override
+            public void mousePressed(MouseEvent e) {
+
+            }
+
+            @Override
+            public void mouseReleased(MouseEvent e) {
+
+            }
+
+            @Override
+            public void mouseEntered(MouseEvent e) {
+
+            }
+
+            @Override
+            public void mouseExited(MouseEvent e) {
+
+            }
+        });
+
+        roundRectangle rr = new roundRectangle();
+        rr.color = Color.white;
+        rr.Width = 450;
+        rr.Height = 40;
+        rr.arcWidth = 40;
+        rr.arcHeight = 40;
+        rr.setBounds(95,40,450,40);
+        messagePanel.add(rr);
+        rr.display();
+
+        JButton sendButton = new JButton("POST");
+        sendButton.setBackground(Color.blue);
+        sendButton.setForeground(Color.white);
+        sendButton.setBorder(null);
+        sendButton.setFont(new Font("Times New Roman",Font.BOLD,18));
+        sendButton.setBounds(550,50,60,20);
+        messagePanel.add(sendButton);
+
+        roundRectangle roundButtonFrame = new roundRectangle();
+        roundButtonFrame.color = Color.blue;
+        roundButtonFrame.Width = 60;
+        roundButtonFrame.Height = 30;
+        roundButtonFrame.arcWidth = 13;
+        roundButtonFrame.arcHeight = 13;
+        roundButtonFrame.setBounds(550,45,60,30);
+        messagePanel.add(roundButtonFrame);
+        roundButtonFrame.display();
+
+        backgroundFrame bgFrame = new backgroundFrame();
+        bgFrame.setBounds(30,20,600,80);
+        messagePanel.add(bgFrame);
+        bgFrame.display();
+
+        ImageIcon imageIcon = new ImageIcon(ClassLoader.getSystemResource("sbook/com/images/account_info.png"));
+        Image image = imageIcon.getImage().getScaledInstance(60,60,Image.SCALE_FAST);
+        ImageIcon new_imageIcon = new ImageIcon(image);
+
+        JLabel accountInfo_image = new JLabel(new_imageIcon);
+        accountInfo_image.setBounds(1300,5,60,60);
+        messagePanel.add(accountInfo_image);
+        accountInfo_image.addMouseListener(new MouseListener() {
+            @Override
+            public void mouseClicked(MouseEvent e) {
+                connection connection = new connection();
+                try {
+                    messageFrame.setVisible(false);
+                    My_Account(true,logo);
+                    String image_query = "SELECT image_path FROM user_info WHERE username='" + usernameId + "';";
+                    ResultSet result_set = connection.statement.executeQuery(image_query);
+                    File file = new File("account_image1.jpg");
+                    FileOutputStream fos = new FileOutputStream(file);
+                    byte[] bytes;
+                    Blob blob;
+                    while (result_set.next()) {
+                        blob = result_set.getBlob("image_path");
+                        bytes = blob.getBytes(1, (int) blob.length());
+                        fos.write(bytes);
+                    }
+                    FileInputStream fin = new FileInputStream(file.getAbsolutePath());
+                    Image image1 = new ImageIcon(fin.readAllBytes()).getImage().getScaledInstance(250,250,Image.SCALE_FAST);
+                    ImageIcon imageIcon1 = new ImageIcon(image1);
+                    JLabel photo = new JLabel(imageIcon1);
+                    photo.setBounds(480,30,250,250);
+                    my_account_panel.add(photo);
+                } catch (Exception exception) {
+                    exception.printStackTrace();
+                }
+            }
+
+            @Override
+            public void mousePressed(MouseEvent e) { }
+
+            @Override
+            public void mouseReleased(MouseEvent e) { }
+
+            @Override
+            public void mouseEntered(MouseEvent e) {
+            }
+
+            @Override
+            public void mouseExited(MouseEvent e) {
+            }
+        });
+
+        messageBox = new JPanel();
+        messageBox.setLayout(new BorderLayout());
+        messageBox.setBackground(Color.white);
+        messagePanel.add(messageBox);
+
+        JScrollPane scrollPane = new JScrollPane(messageBox,JScrollPane.VERTICAL_SCROLLBAR_ALWAYS,JScrollPane.HORIZONTAL_SCROLLBAR_AS_NEEDED);
+        scrollPane.getVerticalScrollBar().setUI(new BasicScrollBarUI() {
+            @Override
+            protected void configureScrollBarColors() {
+                this.thumbColor = Color.lightGray;
+            }
+        });
+        scrollPane.setBounds(30,110,660,650);
+        scrollPane.setBorder(null);
+        messagePanel.add(scrollPane);
+
+        sendButton.addActionListener(e -> {
+            Date Today = new Date();
+            String msg = messageTextArea.getText().trim();
+            String encoded_msg = encoder(msg);
+            String format_msg = usernameId+"->"+encoded_msg+"->"+Today.toString()+"->public";
+            try{
+                writer.write(format_msg);
+                writer.write("\r\n");
+                writer.flush();
+            }catch(Exception exception){
+                System.err.println(exception.getMessage());
+            }
+            messageTextArea.setForeground(Color.lightGray);
+            messageTextArea.setFont(new Font("Arial",Font.PLAIN,18));
+            messageTextArea.setText("Type your P.P");
+        });
+    }
+    public static void My_Account(boolean is_visible,Image logo) throws SQLException {
+        StringBuilder YES_NO_CANCEL = new StringBuilder();
+        connection connection = new connection();
+
+        my_accountFrame = new JFrame("My Account");
+        my_accountFrame.setIconImage(logo);
+        my_accountFrame.setResizable(false);
+        my_accountFrame.setSize(800,400);
+        my_accountFrame.setLocationRelativeTo(null);
+        my_accountFrame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+        my_accountFrame.setVisible(is_visible);
+
+        JMenuBar menuBar = new JMenuBar();
+        JMenu home = new JMenu("Home");
+        JMenuItem change_password = new JMenuItem("Change Password");
+        JMenuItem delete_account = new JMenuItem("Delete Account");
+        JMenu log_out = new JMenu("Log out");
+        JMenu settings = new JMenu("Settings");
+        menuBar.add(home);
+        settings.add(change_password);
+        settings.add(delete_account);
+        menuBar.add(settings);
+        menuBar.add(log_out);
+        my_accountFrame.setJMenuBar(menuBar);
+
+        home.addMouseListener(new MouseListener() {
+            @Override
+            public void mouseClicked(MouseEvent e) {
+                my_accountFrame.setVisible(false);
+                Home(true,logo);
+            }
+
+            @Override
+            public void mousePressed(MouseEvent e) {
+
+            }
+
+            @Override
+            public void mouseReleased(MouseEvent e) {
+
+            }
+
+            @Override
+            public void mouseEntered(MouseEvent e) {
+
+            }
+
+            @Override
+            public void mouseExited(MouseEvent e) {
+
+            }
+        });
+        change_password.addActionListener(e->{
+            my_accountFrame.setVisible(false);
+            Change_password(true,logo);
+        });
+        delete_account.addActionListener(e->{
+            int delete = JOptionPane.showConfirmDialog(null,"Do you really want to terminate your sbook account?");
+            if (delete==0) {
+                my_accountFrame.setVisible(false);
+                Delete_account(usernameId);
+            }
+        });
+        log_out.addMouseListener(new MouseListener() {
+            @Override
+            public void mouseClicked(MouseEvent e) {
+                my_accountFrame.setVisible(false);
+                jFrame.setVisible(true);
+                String query = "UPDATE user_info SET activity='inactive' WHERE username='"+usernameId+"';";
+                try {
+                    connection.statement.executeUpdate(query);
+                } catch (SQLException exception) {
+                    JOptionPane.showMessageDialog(null,"Error! No connection found");
+                }
+                System.exit(0);
+            }
+
+            @Override
+            public void mousePressed(MouseEvent e) {
+
+            }
+
+            @Override
+            public void mouseReleased(MouseEvent e) {
+
+            }
+
+            @Override
+            public void mouseEntered(MouseEvent e) {
+
+            }
+
+            @Override
+            public void mouseExited(MouseEvent e) {
+
+            }
+        });
+
+        my_account_panel = new JPanel();
+        my_accountFrame.getContentPane().add(my_account_panel);
+        my_account_panel.setLayout(null);
+
+        JLabel name = new JLabel("Full Name");
+        name.setFont(new Font("Tahoma",Font.PLAIN,15));
+        name.setBounds(10,10,70,18);
+        my_account_panel.add(name);
+
+        JTextField f_nameTextField = new JTextField();
+        f_nameTextField.setBorder(null);
+        f_nameTextField.setEditable(false);
+        f_nameTextField.setFont(new Font("Arial",Font.PLAIN,13));
+        f_nameTextField.setBounds(90,11,100,16);
+        my_account_panel.add(f_nameTextField);
+
+        JTextField l_nameTextField = new JTextField();
+        l_nameTextField.setBorder(null);
+        l_nameTextField.setEditable(false);
+        l_nameTextField.setFont(new Font("Arial",Font.PLAIN,13));
+        l_nameTextField.setBounds(200,11,100,16);
+        my_account_panel.add(l_nameTextField);
+
+        JLabel email_address = new JLabel("Email Address");
+        email_address.setFont(new Font("Tahoma",Font.PLAIN,15));
+        email_address.setBounds(10,40,100,18);
+        my_account_panel.add(email_address);
+
+        JTextField emailTextField = new JTextField();
+        emailTextField.setBorder(null);
+        emailTextField.setEditable(false);
+        emailTextField.setFont(new Font("Arial",Font.PLAIN,13));
+        emailTextField.setBounds(120,41,150,16);
+        my_account_panel.add(emailTextField);
+
+        JLabel birthdate = new JLabel("BirthDate");
+        birthdate.setFont(new Font("Tahoma",Font.PLAIN,15));
+        birthdate.setBounds(10,70,80,18);
+        my_account_panel.add(birthdate);
+
+        JTextField birthDateTextField = new JTextField();
+        birthDateTextField.setBorder(null);
+        birthDateTextField.setEditable(false);
+        birthDateTextField.setFont(new Font("Arial",Font.PLAIN,13));
+        birthDateTextField.setBounds(90,71,150,16);
+        my_account_panel.add(birthDateTextField);
+
+        JLabel age = new JLabel("Age");
+        age.setFont(new Font("Tahoma",Font.PLAIN,15));
+        age.setBounds(10,100,30,18);
+        my_account_panel.add(age);
+
+        JTextField ageTextField = new JTextField();
+        ageTextField.setBorder(null);
+        ageTextField.setEditable(false);
+        ageTextField.setFont(new Font("Arial",Font.PLAIN,13));
+        ageTextField.setBounds(50,102,60,16);
+        my_account_panel.add(ageTextField);
+
+        JLabel gender = new JLabel("Gender");
+        gender.setFont(new Font("Tahoma",Font.PLAIN,15));
+        gender.setBounds(150,100,50,18);
+        my_account_panel.add(gender);
+
+        JTextField genderTextField = new JTextField();
+        genderTextField.setBorder(null);
+        genderTextField.setEditable(false);
+        genderTextField.setFont(new Font("Arial",Font.PLAIN,13));
+        genderTextField.setBounds(210,102,80,16);
+        my_account_panel.add(genderTextField);
+
+        JLabel status = new JLabel("Status");
+        status.setFont(new Font("Tahoma",Font.PLAIN,15));
+        status.setBounds(10,140,50,20);
+        my_account_panel.add(status);
+
+        JTextArea statusTextArea = new JTextArea();
+        statusTextArea.setEditable(false);
+        statusTextArea.setBounds(10,165,350,100);
+        my_account_panel.add(statusTextArea);
+
+        String fetch_query = "SELECT f_name,L_name,email_address,age,birthdate,gender,status FROM user_info WHERE username='"+usernameId+"';";
+        ResultSet fetch_set = connection.statement.executeQuery(fetch_query);
+        while (fetch_set.next()){
+            f_nameTextField.setText(fetch_set.getString("f_name"));
+            l_nameTextField.setText(fetch_set.getString("L_name"));
+            emailTextField.setText(fetch_set.getString("email_address"));
+            EmailId = emailTextField.getText();
+            birthDateTextField.setText(fetch_set.getString("birthdate"));
+            ageTextField.setText(fetch_set.getString("age"));
+            genderTextField.setText(fetch_set.getString("gender"));
+            statusTextArea.setText(fetch_set.getString("status"));
+        }
+
+        JButton edit = new JButton("Edit");
+        edit.setBounds(40,280,60,20);
+        my_account_panel.add(edit);
+
+        edit.addActionListener(e->{
+            int result = JOptionPane.showConfirmDialog(null,"Do you want to change your email address");
+            YES_NO_CANCEL.append(result);
+            if (result==0) {
+                f_nameTextField.setText("");
+                f_nameTextField.setEditable(true);
+
+                l_nameTextField.setText("");
+                l_nameTextField.setEditable(true);
+
+                emailTextField.setText("");
+                emailTextField.setEditable(true);
+
+                birthDateTextField.setText("dd MMMM yyyy");
+                birthDateTextField.setEditable(true);
+
+                ageTextField.setText("");
+                ageTextField.setEditable(true);
+
+                genderTextField.setText("");
+                genderTextField.setEditable(true);
+
+                statusTextArea.setText("");
+                statusTextArea.setEditable(true);
+            }
+            else if (result==1){
+                f_nameTextField.setText("");
+                f_nameTextField.setEditable(true);
+
+                l_nameTextField.setText("");
+                l_nameTextField.setEditable(true);
+
+                birthDateTextField.setText("dd MMMM yyyy");
+                birthDateTextField.setEditable(true);
+
+                ageTextField.setText("");
+                ageTextField.setEditable(true);
+
+                genderTextField.setText("");
+                genderTextField.setEditable(true);
+
+                statusTextArea.setText("");
+                statusTextArea.setEditable(true);
+            }
+            else
+                JOptionPane.showMessageDialog(null,"Error! You need to choose Yes or No");
+        });
+
+        JButton update = new JButton("Update");
+        update.setBounds(130,280,80,20);
+        my_account_panel.add(update);
+
+        update.addActionListener(e -> {
+            if (YES_NO_CANCEL.toString().equals("0")) {
+                String[] emails = emailTextField.getText().trim().split("@");
+                if (emails[1].equals("unbc.ca") || emails[1].equals("cnc.bc.ca")) {
+                    String first_name = f_nameTextField.getText().trim();
+                    f_nameTextField.setEditable(false);
+                    String last_name = l_nameTextField.getText().trim();
+                    l_nameTextField.setEditable(false);
+                    String email = emailTextField.getText().trim();
+                    emailTextField.setEditable(false);
+                    String birthday = birthDateTextField.getText().trim();
+                    birthDateTextField.setEditable(false);
+                    int user_age = Integer.parseInt(ageTextField.getText().trim());
+                    ageTextField.setEditable(false);
+                    String user_gender = genderTextField.getText().trim();
+                    genderTextField.setEditable(false);
+                    String user_status = statusTextArea.getText().trim();
+                    statusTextArea.setEditable(false);
+                    String query = "UPDATE user_info SET f_name='" + first_name + "',L_name='" + last_name + "',email_address='" + email + "',username='" +emails[0]+"',birthdate='" +birthday+"',age='"+user_age+"',gender='"+user_gender+"',status='"+user_status+"' WHERE username='"+usernameId+"';";
+                    try {
+                        connection.statement.executeUpdate(query);
+                    } catch (Exception exception) {
+                        System.err.println(exception.getMessage());
+                    }
+                    JOptionPane.showMessageDialog(null,"Your profile is updated");
+                }
+                else
+                    JOptionPane.showMessageDialog(null,"Error! Your email address is wrong");
+            }
+            else if (YES_NO_CANCEL.toString().equals("1")){
+                String first_name = f_nameTextField.getText().trim();
+                f_nameTextField.setEditable(false);
+                String last_name = l_nameTextField.getText().trim();
+                l_nameTextField.setEditable(false);
+                String birthday = birthDateTextField.getText().trim();
+                birthDateTextField.setEditable(false);
+                int user_age = Integer.parseInt(ageTextField.getText().trim());
+                ageTextField.setEditable(false);
+                String user_gender = genderTextField.getText().trim();
+                genderTextField.setEditable(false);
+                String user_status = statusTextArea.getText().trim();
+                statusTextArea.setEditable(false);
+                String query = "UPDATE user_info SET f_name='" + first_name + "',L_name='" + last_name+"',birthdate='" +birthday+"',age='"+user_age+"',gender='"+user_gender+"',status='"+user_status+"' WHERE username='"+usernameId+"';";
+                try {
+                    connection.statement.executeUpdate(query);
+                } catch (SQLException sqlException) {
+                    System.err.println(sqlException.getErrorCode());
+                }
+                JOptionPane.showMessageDialog(null,"Your profile is updated");
+            }
+            else
+                JOptionPane.showMessageDialog(null,"Error! your profile cannot be updated");
+        });
+
+        JButton change = new JButton("Change");
+        change.setBounds(550,300,90,20);
+        my_account_panel.add(change);
+
+        change.addActionListener(e -> {
+            JFileChooser fileChooser = new JFileChooser();
+            fileChooser.addChoosableFileFilter(new FileNameExtensionFilter("Images","png","jpeg","jpg","gif"));
+            fileChooser.setCurrentDirectory(new File(System.getProperty("user.home")));
+            int result = fileChooser.showOpenDialog(my_accountFrame);
+            if (result == JFileChooser.APPROVE_OPTION) {
+                try {
+                    File file = new File(fileChooser.getSelectedFile().getAbsolutePath());
+                    FileInputStream fin = new FileInputStream(file);
+                    String query = "UPDATE user_info SET image_path=? WHERE username='" + usernameId + "';";
+                    PreparedStatement ps = connection.connection.prepareStatement(query);
+                    ps.setBinaryStream(1,fin,file.length());
+                    ps.executeUpdate();
+                    ImageIcon changed_imageIcon = new ImageIcon(fileChooser.getSelectedFile().getAbsolutePath());
+                    Image changed_image = changed_imageIcon.getImage().getScaledInstance(250,250,Image.SCALE_SMOOTH);
+                    ImageIcon new_imageIcon = new ImageIcon(changed_image);
+                    JLabel new_photoLabel = new JLabel(new_imageIcon);
+                    new_photoLabel.setBounds(480,30,250,250);
+                    my_account_panel.add(new_photoLabel);
+                    ps.close();
+                    fin.close();
+                }catch (Exception exception){
+                    System.err.println(exception.getMessage());
+                }
+            }
+        });
+    }
+    public static void Change_password(boolean is_visible,Image logo){
+        connection connection = new connection();
+        JFrame change_password = new JFrame("Change Password");
+        change_password.setIconImage(logo);
+        change_password.setResizable(false);
+        change_password.setSize(500,200);
+        change_password.setLocationRelativeTo(null);
+        change_password.setVisible(is_visible);
+
+        JPanel change_password_panel = new JPanel();
+        change_password.getContentPane().add(change_password_panel);
+        change_password_panel.setLayout(null);
+
+        JLabel new_password = new JLabel("New Password");
+        new_password.setFont(new Font("Tahoma",Font.PLAIN,18));
+        new_password.setBounds(90,40,150,25);
+        change_password_panel.add(new_password);
+
+        JPasswordField new_passwordField = new JPasswordField();
+        new_passwordField.setFont(new Font("Tahoma",Font.PLAIN,16));
+        new_passwordField.setBounds(245,40,150,25);
+        change_password_panel.add(new_passwordField);
+
+        JTextField password_TextField = new JTextField();
+        password_TextField.setFont(new Font("Tahoma",Font.PLAIN,16));
+        password_TextField.setBounds(245,40,150,25);
+        password_TextField.setVisible(false);
+        change_password_panel.add(password_TextField);
+
+        JLabel confirm_password = new JLabel("Confirm Password");
+        confirm_password.setFont(new Font("Tahoma",Font.PLAIN,18));
+        confirm_password.setBounds(90,70,150,25);
+        change_password_panel.add(confirm_password);
+
+        JPasswordField confirm_passwordField = new JPasswordField();
+        confirm_passwordField.setFont(new Font("Tahoma",Font.PLAIN,16));
+        confirm_passwordField.setBounds(245,70,150,25);
+        change_password_panel.add(confirm_passwordField);
+
+        JTextField confirm_passwordTextField = new JTextField();
+        confirm_passwordTextField.setFont(new Font("Tahoma",Font.PLAIN,16));
+        confirm_passwordTextField.setBounds(245,70,150,25);
+        confirm_passwordTextField.setVisible(false);
+        change_password_panel.add(confirm_passwordTextField);
+
+        ImageIcon imageIcon = new ImageIcon(ClassLoader.getSystemResource("sbook/com/images/show_password.png"));
+        Image image = imageIcon.getImage().getScaledInstance(19,19,Image.SCALE_FAST);
+        ImageIcon password_image = new ImageIcon(image);
+        JLabel show_password_label = new JLabel(password_image);
+        show_password_label.setBounds(410,71,19,19);
+        change_password_panel.add(show_password_label);
+
+        ImageIcon hideIcon = new ImageIcon(ClassLoader.getSystemResource("sbook/com/images/hide_password.png"));
+        ImageIcon hide_image = new ImageIcon(hideIcon.getImage().getScaledInstance(19,19,Image.SCALE_FAST));
+        JLabel hide_password_label = new JLabel(hide_image);
+        hide_password_label.setBounds(410,71,19,19);
+        hide_password_label.setVisible(false);
+        change_password_panel.add(hide_password_label);
+
+        show_password_label.addMouseListener(new MouseListener() {
+            @Override
+            public void mouseClicked(MouseEvent e) {
+                show_password_label.setVisible(false);
+                hide_password_label.setVisible(true);
+                new_passwordField.setVisible(false);
+                confirm_passwordField.setVisible(false);
+                password_TextField.setVisible(true);
+                confirm_passwordTextField.setVisible(true);
+                password_TextField.setText(new_passwordField.getText().trim());
+                new_passwordField.setText(password_TextField.getText().trim());
+                confirm_passwordTextField.setText(confirm_passwordField.getText().trim());
+                confirm_passwordField.setText(confirm_passwordField.getText().trim());
+            }
+
+            @Override
+            public void mousePressed(MouseEvent e) {
+
+            }
+
+            @Override
+            public void mouseReleased(MouseEvent e) {
+
+            }
+
+            @Override
+            public void mouseEntered(MouseEvent e) {
+
+            }
+
+            @Override
+            public void mouseExited(MouseEvent e) {
+
+            }
+        });
+        hide_password_label.addMouseListener(new MouseListener() {
+            @Override
+            public void mouseClicked(MouseEvent e) {
+                show_password_label.setVisible(true);
+                hide_password_label.setVisible(false);
+                password_TextField.setVisible(false);
+                confirm_passwordTextField.setVisible(false);
+                new_passwordField.setVisible(true);
+                confirm_passwordField.setVisible(true);
+                new_passwordField.setText(password_TextField.getText().trim());
+                password_TextField.setText(new_passwordField.getText().trim());
+                confirm_passwordField.setText(confirm_passwordTextField.getText().trim());
+                confirm_passwordTextField.setText(confirm_passwordField.getText().trim());
+            }
+
+            @Override
+            public void mousePressed(MouseEvent e) {
+
+            }
+
+            @Override
+            public void mouseReleased(MouseEvent e) {
+
+            }
+
+            @Override
+            public void mouseEntered(MouseEvent e) {
+
+            }
+
+            @Override
+            public void mouseExited(MouseEvent e) {
+
+            }
+        });
+
+        JButton back  = new JButton("Back");
+        back.setBounds(160,100,70,20);
+        change_password_panel.add(back);
+
+        JButton change = new JButton("Change");
+        change.setBounds(250,100,80,20);
+        change_password_panel.add(change);
+
+        back.addActionListener(e->{
+            change_password.setVisible(false);
+            Home(true,logo);
+        });
+
+        change.addActionListener(e->{
+            if (password_TextField.getText().trim().equals(confirm_passwordTextField.getText().trim())){
+                String query = "UPDATE user_info SET password='"+secure_password(password_TextField.getText().trim())+"' WHERE username='"+usernameId+"';";
+                try {
+                    connection.statement.executeUpdate(query);
+                } catch (SQLException sqlException) {
+                    JOptionPane.showMessageDialog(null,sqlException.getErrorCode());
+                }
+                JOptionPane.showMessageDialog(null,"Password is updated");
+                sending_msg(EmailId,password_TextField.getText().trim());
+                new_passwordField.setText("");
+                confirm_passwordField.setText("");
+                password_TextField.setText("");
+                confirm_passwordTextField.setText("");
+            }
+            else
+                JOptionPane.showMessageDialog(null,"Error! Your password fields don't match");
+        });
+    }
+    public static void Delete_account(String username){
+        connection connection = new connection();
+        String query = "DELETE FROM user_info WHERE username='"+username+"';";
+        try {
+            connection.statement.executeUpdate(query);
+        }catch (SQLException exception){
+            exception.getErrorCode();
+        }
+        JOptionPane.showMessageDialog(null,"Your account has been terminated");
+        sending_msg(EmailId);
+    }
+    public static void About(boolean is_visible,Image logo){
+        Date date = new Date();
+        String[] array = date.toString().split(" ");
+        JFrame about_frame = new JFrame("About us");
+        about_frame.setSize(1000,500);
+        about_frame.setResizable(false);
+        about_frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+        about_frame.setIconImage(logo);
+        about_frame.setLocationRelativeTo(null);
+        about_frame.setVisible(is_visible);
+
+        JMenuBar jMenuBar = new JMenuBar();
+        JMenu login_page = new JMenu("Home");
+        JMenu about_us = new JMenu("About us");
+        jMenuBar.add(login_page);
+        jMenuBar.add(about_us);
+        about_frame.setJMenuBar(jMenuBar);
+
+        login_page.addMouseListener(new MouseListener() {
+            @Override
+            public void mouseClicked(MouseEvent e) {
+                jFrame.setVisible(true);
+                about_frame.setVisible(false);
+            }
+
+            @Override
+            public void mousePressed(MouseEvent e) {
+
+            }
+
+            @Override
+            public void mouseReleased(MouseEvent e) {
+
+            }
+
+            @Override
+            public void mouseEntered(MouseEvent e) {
+
+            }
+
+            @Override
+            public void mouseExited(MouseEvent e) {
+
+            }
+        });
+
+        JPanel about_panel = new JPanel();
+        about_frame.getContentPane().add(about_panel);
+        about_panel.setLayout(null);
+        about_panel.setBackground(Color.white);
+
+        JLabel about = new JLabel("[About sbook]");
+        about.setFont(new Font("Times New Roman",Font.BOLD,18));
+        about.setBounds(425,10,150,20);
+        about_panel.add(about);
+
+        JTextArea header_info = new JTextArea();
+        header_info.setEditable(false);
+        header_info.setForeground(Color.white);
+        header_info.setBackground(new Color(19,56,190));
+        header_info.setFont(new Font("Times New Roman",Font.PLAIN,16));
+        header_info.setText("\n\t\t\rsbook is a free source application for UNBC/CNC Students to get connected to each other");
+        header_info.setText(header_info.getText()+"\n\t\t           Students can connect to anonymous students and can add them to the book");
+        header_info.setBounds(0,40,1000,100);
+        about_panel.add(header_info);
+
+        JLabel founders = new JLabel("[Founders]");
+        founders.setFont(new Font("Times New Roman",Font.BOLD,18));
+        founders.setBounds(435,155,90,20);
+        about_panel.add(founders);
+
+        JTextArea middle_area = new JTextArea();
+        middle_area.setEditable(false);
+        middle_area.setForeground(Color.white);
+        middle_area.setBackground(new Color(19,56,190));
+        middle_area.setFont(new Font("Tahoma",Font.BOLD,16));
+        middle_area.setText("[Sahib Singh]");
+        middle_area.setBounds(0,180,1000,100);
+        about_panel.add(middle_area);
+
+        JTextArea about_footer = new JTextArea();
+        about_footer.setEditable(false);
+        about_footer.setForeground(Color.white);
+        about_footer.setBackground(new Color(19,56,190));
+        about_footer.setFont(new Font("Tahoma",Font.PLAIN,14));
+        about_footer.setText("\n\n   Secretbook\n   The S.S Productions\n   sbook Team mail: sbook@mail.com");
+        about_footer.setBounds(0,320,1000,100);
+        about_panel.add(about_footer);
+
+        JLabel copyrightSign = new JLabel("Secretbook© "+array[array.length-1]);
+        copyrightSign.setFont(new Font("Tahoma",Font.BOLD,10));
+        copyrightSign.setBounds(10,425,200,12);
+        about_panel.add(copyrightSign);
+    }
+
+    public static void main(String[] args) {
+        User user = new User();
+        Thread thread = new Thread(user);
+        thread.start();
+    }
+}
+class connection {
+    Connection connection;
+    Statement statement;
+    public connection(){
+        try {
+            Class.forName("com.mysql.cj.jdbc.Driver");
+            connection = DriverManager.getConnection("jdbc:mysql://localhost:3308/userids","root"
+                    ,"Secret@book2020");
+            statement = connection.createStatement();
+        }catch (Exception exception){
+            JOptionPane.showMessageDialog(null,exception.getMessage());
+        }
+    }
+}
